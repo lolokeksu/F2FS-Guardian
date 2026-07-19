@@ -1,17 +1,28 @@
-<p align="center">
-  <img src="docs/assets/banner.svg" width="100%" alt="F2FS Guardian — controlled F2FS maintenance for Android 13–16">
-</p>
+<h1 align="center">F2FS Guardian</h1>
+
+<hr>
+
+<h2 align="center">Transparent, safety-gated F2FS maintenance for rooted Android 13–16 devices</h2>
 
 <p align="center">
-  <a href="https://github.com/Lolokeksu/F2FS-Guardian/releases"><img alt="Release v1" src="https://img.shields.io/badge/release-v1-0ea5e9"></a>
+  <a href="https://github.com/lolokeksu/F2FS-Guardian/releases/tag/v1"><img alt="Release v1" src="https://img.shields.io/badge/release-v1-0ea5e9"></a>
+  <a href="https://github.com/lolokeksu/F2FS-Guardian/actions/workflows/ci.yml"><img alt="Validate and build" src="https://github.com/lolokeksu/F2FS-Guardian/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Android 13–16" src="https://img.shields.io/badge/Android-13--16-3ddc84?logo=android&logoColor=white">
-  <img alt="Magisk, KernelSU and APatch" src="https://img.shields.io/badge/root-Magisk%20%7C%20KernelSU%20%7C%20APatch-334155">
-  <img alt="POSIX shell" src="https://img.shields.io/badge/code-POSIX%20shell-f8fafc?logo=gnu-bash&logoColor=111827">
-  <a href="LICENSE"><img alt="GPL-3.0-only" src="https://img.shields.io/badge/license-GPL--3.0--only-2563eb"></a>
 </p>
 
-<p align="center"><strong>Conservative, systemless F2FS maintenance for rooted Android devices.</strong></p>
-<p align="center"><a href="README_RU.md">Русская документация</a> · <a href="docs/4PDA_POST_RU.md">4PDA release text</a> · <a href="CHANGELOG.md">Changelog</a> · <a href="SECURITY.md">Security</a></p>
+<p align="center">
+  <img alt="Tested device" src="https://img.shields.io/badge/tested-Realme%20GT%20Neo%205%20SE-64748b">
+  <img alt="Root APatch tested" src="https://img.shields.io/badge/root-APatch%20tested-f97316">
+  <img alt="Filesystem F2FS" src="https://img.shields.io/badge/filesystem-F2FS-334155">
+</p>
+
+<p align="center">
+  <img alt="POSIX shell runtime" src="https://img.shields.io/badge/runtime-POSIX%20shell-a3a3a3?logo=gnu-bash&logoColor=111827">
+  <a href="LICENSE"><img alt="GPL-3.0-only" src="https://img.shields.io/badge/license-GPL--3.0--only-0ea5e9"></a>
+  <img alt="No telemetry" src="https://img.shields.io/badge/telemetry-none-22c55e">
+</p>
+
+<p align="center"><a href="README_RU.md">Русская документация</a> · <a href="https://github.com/lolokeksu/F2FS-Guardian/releases">Releases</a> · <a href="https://github.com/lolokeksu/F2FS-Guardian/issues">Issues</a> · <a href="SECURITY.md">Security</a></p>
 
 ---
 
@@ -296,7 +307,6 @@ module/service.sh              Late-start entry point
 module/uninstall.sh            Ownership-safe cleanup
 scripts/build.sh               Deterministic release builder
 tests/                          Static and mocked lifecycle tests
-docs/4PDA_POST_RU.md           Ready-to-publish Russian release post
 ```
 
 ## Credits
