@@ -1,16 +1,28 @@
-<p align="center">
-  <img src="docs/assets/banner.svg" width="100%" alt="F2FS Guardian — контролируемое обслуживание F2FS для Android 13–16">
-</p>
+<h1 align="center">F2FS Guardian</h1>
+
+<hr>
+
+<h2 align="center">Прозрачное и безопасно ограниченное обслуживание F2FS для Android 13–16 с root</h2>
 
 <p align="center">
-  <a href="https://github.com/Lolokeksu/F2FS-Guardian/releases"><img alt="Релиз v1" src="https://img.shields.io/badge/релиз-v1-0ea5e9"></a>
+  <a href="https://github.com/lolokeksu/F2FS-Guardian/releases/tag/v1"><img alt="Релиз v1" src="https://img.shields.io/badge/release-v1-0ea5e9"></a>
+  <a href="https://github.com/lolokeksu/F2FS-Guardian/actions/workflows/ci.yml"><img alt="Проверка и сборка" src="https://github.com/lolokeksu/F2FS-Guardian/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Android 13–16" src="https://img.shields.io/badge/Android-13--16-3ddc84?logo=android&logoColor=white">
-  <img alt="Magisk, KernelSU и APatch" src="https://img.shields.io/badge/root-Magisk%20%7C%20KernelSU%20%7C%20APatch-334155">
-  <a href="LICENSE"><img alt="GPL-3.0-only" src="https://img.shields.io/badge/license-GPL--3.0--only-2563eb"></a>
 </p>
 
-<p align="center"><strong>Консервативное systemless-обслуживание F2FS без рекламных обещаний и постоянного тюнинга ядра.</strong></p>
-<p align="center"><a href="README.md">English</a> · <a href="docs/4PDA_POST_RU.md">Текст релиза для 4PDA</a> · <a href="CHANGELOG.md">Изменения</a> · <a href="SECURITY.md">Безопасность</a></p>
+<p align="center">
+  <img alt="Tested device" src="https://img.shields.io/badge/tested-Realme%20GT%20Neo%205%20SE-64748b">
+  <img alt="Root APatch tested" src="https://img.shields.io/badge/root-APatch%20tested-f97316">
+  <img alt="Filesystem F2FS" src="https://img.shields.io/badge/filesystem-F2FS-334155">
+</p>
+
+<p align="center">
+  <img alt="POSIX shell runtime" src="https://img.shields.io/badge/runtime-POSIX%20shell-a3a3a3?logo=gnu-bash&logoColor=111827">
+  <a href="LICENSE"><img alt="GPL-3.0-only" src="https://img.shields.io/badge/license-GPL--3.0--only-0ea5e9"></a>
+  <img alt="No telemetry" src="https://img.shields.io/badge/telemetry-none-22c55e">
+</p>
+
+<p align="center"><a href="README.md">English</a> · <a href="https://github.com/lolokeksu/F2FS-Guardian/releases">Releases</a> · <a href="https://github.com/lolokeksu/F2FS-Guardian/issues">Issues</a> · <a href="SECURITY.md">Security</a></p>
 
 ---
 
