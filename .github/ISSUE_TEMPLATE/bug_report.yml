@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a reproducible F2FS Guardian problem
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include personal files, application data or root superkeys.
+  - type: input
+    id: device
+    attributes:
+      label: Device and ROM
+      placeholder: Realme GT Neo 5 SE, Realme UI, build number
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android/API and root manager
+      placeholder: Android 13 / API 33, APatch version
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: F2FS Guardian status
+      description: Paste output of the status and self-test commands.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log lines
+      render: text
