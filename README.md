@@ -1,8 +1,6 @@
-<h1 align="center">F2FS Guardian</h1>
-
-<hr>
-
-<h2 align="center">Transparent, safety-gated F2FS maintenance for rooted Android 13–16 devices</h2>
+<p align="center">
+  <img src="docs/assets/banner.svg" width="100%" alt="F2FS Guardian — controlled F2FS maintenance for Android 13–16">
+</p>
 
 <p align="center">
   <a href="https://github.com/lolokeksu/F2FS-Guardian/releases/tag/v1"><img alt="Release v1" src="https://img.shields.io/badge/release-v1-0ea5e9"></a>
