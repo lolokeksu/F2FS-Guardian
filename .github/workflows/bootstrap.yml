@@ -1,0 +1,64 @@
+name: Bootstrap F2FS Guardian
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.bootstrap/repo.tar.gz.b64'
+      - '.github/workflows/bootstrap.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y busybox zip
+
+      - name: Verify and unpack repository
+        run: |
+          base64 -d .bootstrap/repo.tar.gz.b64 > /tmp/f2fs-guardian-repo.tar.gz
+          echo '1c13821267f1e7fb10dba9127ba9d9d2564fefd1e6d0b7dbb329f1e617f208d1  /tmp/f2fs-guardian-repo.tar.gz' | sha256sum -c -
+          tar -xzf /tmp/f2fs-guardian-repo.tar.gz -C .
+          rm -rf .bootstrap .github/workflows/bootstrap.yml
+          chmod +x module/*.sh module/lib/*.sh scripts/*.sh tests/*.sh
+
+      - name: Test source
+        run: ./scripts/test.sh
+
+      - name: Build deterministic release
+        run: ./scripts/build.sh
+
+      - name: Verify release checksums
+        run: cd dist && sha256sum -c SHA256SUMS
+
+      - name: Commit complete repository
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'release: publish F2FS Guardian v1'
+          git push origin main
+
+      - name: Publish GitHub Release v1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v1 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Release v1 already exists.'
+          else
+            gh release create v1 \
+              dist/F2FS-Guardian-v1.zip \
+              dist/F2FS-Guardian-v1-source.zip \
+              dist/SHA256SUMS \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$(git rev-parse HEAD)" \
+              --title 'F2FS Guardian v1' \
+              --notes-file docs/GITHUB_RELEASE_V1.md
+          fi
