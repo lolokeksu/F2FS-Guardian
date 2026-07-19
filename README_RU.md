@@ -22,8 +22,7 @@
   <img alt="No telemetry" src="https://img.shields.io/badge/telemetry-none-22c55e">
 </p>
 
-<p align="center"><a href="README.md">English</a> · <a href="https://github.com/lolokeksu/F2FS-Guardian/releases">Releases</a> · <a href="https://github.com/lolokeksu/F2FS-Guardian/issues">Issues</a> · <a href="SECURITY.md">Security</a></p>
-
+<p align="center"><a href="README.md">English</a> · <a href="https://github.com/lolokeksu/F2FS-Guardian/releases">Релизы</a> · <a href="https://github.com/lolokeksu/F2FS-Guardian/issues">Проблема</a> · <a href="SECURITY.md">Безопасность</a></p>
 ---
 
 ## Назначение
