@@ -10,8 +10,73 @@ case ${API:-$(getprop ro.build.version.sdk 2>/dev/null)} in
     *) abort "Android 13-16 (API 33-36) is required." ;;
 esac
 
-FS=$(stat -f -c %T /data 2>/dev/null)
-[ "$FS" = f2fs ] || abort "/data must use F2FS; detected: ${FS:-unknown}."
+detect_data_fs() {
+    DETECTED_FS=""
+
+    # Prefer Android Toybox explicitly. KernelSU/KernelSU Next installers may
+    # place BusyBox applets before system commands in PATH.
+    if [ -x /system/bin/stat ]; then
+        DETECTED_FS=$(/system/bin/stat -f -c '%T' /data 2>/dev/null)
+    fi
+
+    # Fall back to the stat implementation provided by the installer.
+    if [ -z "$DETECTED_FS" ]; then
+        DETECTED_FS=$(stat -f -c '%T' /data 2>/dev/null)
+    fi
+
+    # Read the actual mount table when stat is unavailable or incompatible.
+    if [ -z "$DETECTED_FS" ] && [ -r /proc/self/mountinfo ]; then
+        DETECTED_FS=$(
+            awk '
+                $5 == "/data" {
+                    for (i = 1; i <= NF; i++) {
+                        if ($i == "-") {
+                            print $(i + 1)
+                            exit
+                        }
+                    }
+                }
+            ' /proc/self/mountinfo 2>/dev/null
+        )
+    fi
+
+    if [ -z "$DETECTED_FS" ] && [ -r /proc/mounts ]; then
+        DETECTED_FS=$(
+            awk '$2 == "/data" { print $3; exit }' /proc/mounts 2>/dev/null
+        )
+    fi
+
+    # Normalize known representations returned by different stat builds.
+    case "$DETECTED_FS" in
+        f2fs|F2FS)
+            DETECTED_FS=f2fs
+            ;;
+        0xf2f52010|f2f52010)
+            DETECTED_FS=f2fs
+            ;;
+    esac
+
+    printf '%s\n' "$DETECTED_FS"
+}
+
+FS=$(detect_data_fs)
+
+case "$FS" in
+    f2fs)
+        ui_print "- Filesystem /data: F2FS"
+        ;;
+    ext4|erofs|btrfs|xfs|tmpfs)
+        abort "/data must use F2FS; detected: $FS."
+        ;;
+    "")
+        ui_print "! Unable to verify /data filesystem in installer context."
+        ui_print "! Installation will continue with runtime verification."
+        ;;
+    *)
+        ui_print "! Unrecognized /data filesystem result: $FS"
+        ui_print "! Installation will continue with runtime verification."
+        ;;
+esac
 
 OLD=/data/adb/modules/f2fs_guardian
 DATA=/data/adb/f2fs_guardian
@@ -39,6 +104,9 @@ set_perm "$MODPATH/lib/common.sh" 0 0 0755
 set_perm_recursive "$MODPATH/config" 0 0 0755 0644
 
 ui_print "- Android API: ${API:-unknown}"
-ui_print "- Filesystem /data: F2FS"
+case "$FS" in
+    f2fs) ;;
+    *) ui_print "- Filesystem /data: deferred to post-boot self-test" ;;
+esac
 ui_print "- Persistent configuration is preserved"
 ui_print "- Reboot, then run self-test"
