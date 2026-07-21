@@ -1,7 +1,7 @@
 id=f2fs_guardian
 name=F2FS Guardian
-version=v1
-versionCode=10001
+version=v1.1
+versionCode=10100
 author=Lolokeksu
-description=Conservative, systemless F2FS maintenance for Android 13-16.
+description=Conservative F2FS maintenance with bilingual CLI, short commands, diagnostics and safe Manager Action handling.
 updateJson=https://raw.githubusercontent.com/lolokeksu/F2FS-Guardian/main/update.json

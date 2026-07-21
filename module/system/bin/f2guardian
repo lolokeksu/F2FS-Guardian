@@ -1,0 +1,60 @@
+#!/system/bin/sh
+ENGINE=${F2G_ENGINE:-/data/adb/modules/f2fs_guardian/f2fs-guardian.sh}
+
+fg_cli_usage() {
+    cat <<'EOF'
+F2FS Guardian short commands:
+  f2g                 interactive bilingual menu
+  f2status            localized status
+  f2check             localized condition check
+  f2request           queue safe maintenance
+  f2cancel            cancel queued/active maintenance
+  f2logs              show recent logs
+  f2doctor            localized diagnostics
+  f2start             enable automatic maintenance
+  f2stop              disable automatic maintenance
+  f2profile NAME      balanced|conservative|manual
+  f2lang LANG         ru|en
+EOF
+}
+
+ACTION=${1:-help}
+ARG=${2:-}
+case "$ACTION" in
+    menu) ENGINE_ACTION=menu; ENGINE_ARG= ;;
+    status) ENGINE_ACTION=status-ui; ENGINE_ARG= ;;
+    check) ENGINE_ACTION=check-ui; ENGINE_ARG= ;;
+    request|cancel|logs) ENGINE_ACTION=$ACTION; ENGINE_ARG= ;;
+    doctor) ENGINE_ACTION=doctor-ui; ENGINE_ARG= ;;
+    start) ENGINE_ACTION=enable; ENGINE_ARG= ;;
+    stop) ENGINE_ACTION=disable; ENGINE_ARG= ;;
+    profile)
+        case "$ARG" in balanced|conservative|manual) ;; *) echo 'Profile: balanced, conservative or manual'; exit 2 ;; esac
+        ENGINE_ACTION=profile; ENGINE_ARG=$ARG
+        ;;
+    lang)
+        case "$ARG" in ru|en) ;; *) echo 'Language: ru or en'; exit 2 ;; esac
+        ENGINE_ACTION=lang; ENGINE_ARG=$ARG
+        ;;
+    help|-h|--help) fg_cli_usage; exit 0 ;;
+    *) fg_cli_usage; exit 2 ;;
+esac
+
+[ -r "$ENGINE" ] || { echo "F2FS Guardian engine not found: $ENGINE" >&2; exit 1; }
+
+if [ "$(id -u 2>/dev/null)" = 0 ]; then
+    if [ -n "$ENGINE_ARG" ]; then
+        exec /system/bin/sh "$ENGINE" "$ENGINE_ACTION" "$ENGINE_ARG"
+    fi
+    exec /system/bin/sh "$ENGINE" "$ENGINE_ACTION"
+fi
+
+command -v su >/dev/null 2>&1 || { echo 'Root access is required.' >&2; exit 1; }
+case "$ENGINE_ACTION" in
+    profile|lang)
+        exec su -c "/system/bin/sh '$ENGINE' '$ENGINE_ACTION' '$ENGINE_ARG'"
+        ;;
+    *)
+        exec su -c "/system/bin/sh '$ENGINE' '$ENGINE_ACTION'"
+        ;;
+esac

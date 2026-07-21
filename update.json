@@ -1,6 +1,6 @@
 {
-  "version": "v1",
-  "versionCode": 10001,
-  "zipUrl": "https://github.com/lolokeksu/F2FS-Guardian/releases/download/v1/F2FS-Guardian-v1.zip",
+  "version": "v1.1",
+  "versionCode": 10100,
+  "zipUrl": "https://github.com/lolokeksu/F2FS-Guardian/releases/download/v1.1/F2FS-Guardian-v1.1.zip",
   "changelog": "https://raw.githubusercontent.com/lolokeksu/F2FS-Guardian/main/CHANGELOG.md"
 }

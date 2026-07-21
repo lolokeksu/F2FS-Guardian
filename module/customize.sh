@@ -1,7 +1,7 @@
 #!/system/bin/sh
 
 ui_print "*******************************"
-ui_print "       F2FS Guardian v1        "
+ui_print "       F2FS Guardian v1.1      "
 ui_print "          by Lolokeksu        "
 ui_print "*******************************"
 
@@ -102,6 +102,7 @@ set_perm "$MODPATH/action.sh" 0 0 0755
 set_perm "$MODPATH/uninstall.sh" 0 0 0755
 set_perm "$MODPATH/lib/common.sh" 0 0 0755
 set_perm_recursive "$MODPATH/config" 0 0 0755 0644
+set_perm_recursive "$MODPATH/system/bin" 0 0 0755 0755
 
 ui_print "- Android API: ${API:-unknown}"
 case "$FS" in
@@ -109,4 +110,5 @@ case "$FS" in
     *) ui_print "- Filesystem /data: deferred to post-boot self-test" ;;
 esac
 ui_print "- Persistent configuration is preserved"
-ui_print "- Reboot, then run self-test"
+ui_print "- Bilingual menu and short commands included"
+ui_print "- Reboot, then run: f2g or self-test"

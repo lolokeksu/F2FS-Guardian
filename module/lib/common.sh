@@ -7,6 +7,9 @@ FG_LOG_DIR=$FG_DATA_DIR/logs
 FG_LOG_FILE=$FG_LOG_DIR/guardian.log
 FG_CONFIG_FILE=$FG_DATA_DIR/config.conf
 FG_DEFAULT_CONFIG=$FG_MODDIR/config/default.conf
+FG_MOUNTINFO_FILE=${FG_MOUNTINFO_FILE:-/proc/self/mountinfo}
+FG_MOUNTS_FILE=${FG_MOUNTS_FILE:-/proc/mounts}
+FG_SYS_DEV_BLOCK_ROOT=${FG_SYS_DEV_BLOCK_ROOT:-/sys/dev/block}
 
 fg_now() {
     date +%s 2>/dev/null || echo 0
@@ -67,9 +70,29 @@ fg_log() {
     chmod 0600 "$FG_LOG_FILE" 2>/dev/null
 }
 
+fg_detect_default_menu_language() {
+    _fg_locale=$(getprop persist.sys.locale 2>/dev/null)
+    [ -n "$_fg_locale" ] || _fg_locale=$(getprop ro.product.locale 2>/dev/null)
+    case $_fg_locale in
+        ru*|RU*) echo 0 ;;
+        *) echo 1 ;;
+    esac
+}
+
+fg_resolve_menu_language() {
+    case ${MENU_LANGUAGE:-2} in
+        0) echo ru ;;
+        1) echo en ;;
+        *)
+            if [ "$(fg_detect_default_menu_language)" = 0 ]; then echo ru; else echo en; fi
+            ;;
+    esac
+}
+
 fg_set_default_config() {
     ENABLED=1
     AUTO_ENABLED=1
+    MENU_LANGUAGE=$(fg_detect_default_menu_language)
     CHECK_INTERVAL_MIN=60
     MIN_INTERVAL_HOURS=24
     MIN_SCREEN_OFF_MIN=20
@@ -98,6 +121,7 @@ fg_config_assign() {
     case $_fg_key in
         ENABLED) [ "$_fg_val" -le 1 ] && ENABLED=$_fg_val ;;
         AUTO_ENABLED) [ "$_fg_val" -le 1 ] && AUTO_ENABLED=$_fg_val ;;
+        MENU_LANGUAGE) [ "$_fg_val" -le 2 ] && MENU_LANGUAGE=$_fg_val ;;
         CHECK_INTERVAL_MIN) [ "$_fg_val" -ge 1 ] && [ "$_fg_val" -le 1440 ] && CHECK_INTERVAL_MIN=$_fg_val ;;
         MIN_INTERVAL_HOURS) [ "$_fg_val" -le 720 ] && MIN_INTERVAL_HOURS=$_fg_val ;;
         MIN_SCREEN_OFF_MIN) [ "$_fg_val" -le 1440 ] && MIN_SCREEN_OFF_MIN=$_fg_val ;;
@@ -146,19 +170,24 @@ fg_install_default_config() {
     fg_ensure_dirs
     if [ ! -f "$FG_CONFIG_FILE" ]; then
         cp "$FG_DEFAULT_CONFIG" "$FG_CONFIG_FILE" 2>/dev/null || return 1
+        _fg_lang=$(fg_detect_default_menu_language)
+        sed "s/^MENU_LANGUAGE=.*/MENU_LANGUAGE=$_fg_lang/" "$FG_CONFIG_FILE" > "$FG_CONFIG_FILE.tmp.$$" 2>/dev/null && \
+            mv -f "$FG_CONFIG_FILE.tmp.$$" "$FG_CONFIG_FILE"
         chmod 0600 "$FG_CONFIG_FILE" 2>/dev/null
     fi
 }
 
 fg_config_set() {
     fg_load_config
+    [ "$MENU_LANGUAGE" = 2 ] && MENU_LANGUAGE=$(fg_detect_default_menu_language)
     fg_config_assign "$1" "$2"
     _fg_tmp=$FG_CONFIG_FILE.tmp.$$
     cat > "$_fg_tmp" <<EOF_CONFIG
-# F2FS Guardian v1
+# F2FS Guardian v1.1
 # Persistent user configuration. Integer values only.
 ENABLED=$ENABLED
 AUTO_ENABLED=$AUTO_ENABLED
+MENU_LANGUAGE=$MENU_LANGUAGE
 CHECK_INTERVAL_MIN=$CHECK_INTERVAL_MIN
 MIN_INTERVAL_HOURS=$MIN_INTERVAL_HOURS
 MIN_SCREEN_OFF_MIN=$MIN_SCREEN_OFF_MIN
@@ -199,29 +228,91 @@ fg_android_api() {
     getprop ro.build.version.sdk 2>/dev/null | tr -cd '0-9'
 }
 
+fg_normalize_fs_name() {
+    case ${1:-} in
+        f2fs|F2FS|0xf2f52010|f2f52010) echo f2fs ;;
+        *) printf '%s\n' "${1:-}" ;;
+    esac
+}
+
 fg_data_fs() {
-    [ -n "${FG_DATA_FS:-}" ] && { echo "$FG_DATA_FS"; return; }
-    stat -f -c %T /data 2>/dev/null || df -T /data 2>/dev/null | awk 'NR==2 {print $2}'
+    [ -n "${FG_DATA_FS:-}" ] && { fg_normalize_fs_name "$FG_DATA_FS"; return; }
+    _fg_fs=""
+    if [ -r "$FG_MOUNTINFO_FILE" ]; then
+        _fg_fs=$(awk '
+            $5 == "/data" {
+                for (i = 1; i <= NF; i++) {
+                    if ($i == "-") { print $(i + 1); exit }
+                }
+            }
+        ' "$FG_MOUNTINFO_FILE" 2>/dev/null)
+    fi
+    if [ -z "$_fg_fs" ] && [ -x /system/bin/stat ]; then
+        _fg_fs=$(/system/bin/stat -f -c '%T' /data 2>/dev/null)
+    fi
+    if [ -z "$_fg_fs" ]; then
+        _fg_fs=$(stat -f -c '%T' /data 2>/dev/null)
+    fi
+    if [ -z "$_fg_fs" ] && [ -r "$FG_MOUNTS_FILE" ]; then
+        _fg_fs=$(awk '$2 == "/data" { print $3; exit }' "$FG_MOUNTS_FILE" 2>/dev/null)
+    fi
+    fg_normalize_fs_name "$_fg_fs"
+}
+
+fg_data_fs_method() {
+    [ -n "${FG_DATA_FS:-}" ] && { echo override; return; }
+    if [ -r "$FG_MOUNTINFO_FILE" ] && awk '$5 == "/data" { found=1 } END { exit !found }' "$FG_MOUNTINFO_FILE" 2>/dev/null; then
+        echo mountinfo
+    elif [ -x /system/bin/stat ] && /system/bin/stat -f -c '%T' /data >/dev/null 2>&1; then
+        echo system-stat
+    elif stat -f -c '%T' /data >/dev/null 2>&1; then
+        echo path-stat
+    elif [ -r "$FG_MOUNTS_FILE" ] && awk '$2 == "/data" { found=1 } END { exit !found }' "$FG_MOUNTS_FILE" 2>/dev/null; then
+        echo proc-mounts
+    else
+        echo unavailable
+    fi
+}
+
+fg_data_devnum() {
+    [ -n "${FG_DATA_DEVNUM:-}" ] && { echo "$FG_DATA_DEVNUM"; return; }
+    [ -r "$FG_MOUNTINFO_FILE" ] || return 1
+    awk '$5 == "/data" { print $3; exit }' "$FG_MOUNTINFO_FILE" 2>/dev/null
 }
 
 fg_data_source() {
     [ -n "${FG_DATA_SOURCE:-}" ] && { echo "$FG_DATA_SOURCE"; return; }
-    if command -v findmnt >/dev/null 2>&1; then
-        findmnt -n -o SOURCE /data 2>/dev/null && return 0
+    if [ -r "$FG_MOUNTINFO_FILE" ]; then
+        awk '
+            $5 == "/data" {
+                for (i = 1; i <= NF; i++) {
+                    if ($i == "-") { print $(i + 2); exit }
+                }
+            }
+        ' "$FG_MOUNTINFO_FILE" 2>/dev/null && return 0
     fi
-    mount 2>/dev/null | awk '$3=="/data" {print $1; exit}'
+    if [ -r "$FG_MOUNTS_FILE" ]; then
+        awk '$2 == "/data" { print $1; exit }' "$FG_MOUNTS_FILE" 2>/dev/null
+    fi
 }
 
 fg_instance_name() {
+    [ -n "${FG_INSTANCE:-}" ] && { echo "$FG_INSTANCE"; return; }
+    _fg_devnum=$(fg_data_devnum)
+    if [ -n "$_fg_devnum" ] && [ -e "$FG_SYS_DEV_BLOCK_ROOT/$_fg_devnum" ]; then
+        _fg_path=$(readlink -f "$FG_SYS_DEV_BLOCK_ROOT/$_fg_devnum" 2>/dev/null)
+        _fg_name=${_fg_path##*/}
+        if [ -n "$_fg_name" ] && [ -d "$FG_SYSFS_ROOT/$_fg_name" ]; then
+            echo "$_fg_name"
+            return 0
+        fi
+    fi
     _fg_source=$(fg_data_source)
     _fg_name=${_fg_source##*/}
-    [ -n "$_fg_name" ] && [ -d "$FG_SYSFS_ROOT/$_fg_name" ] && { echo "$_fg_name"; return 0; }
-    for _fg_dir in "$FG_SYSFS_ROOT"/*; do
-        [ -d "$_fg_dir" ] || continue
-        [ -r "$_fg_dir/gc_urgent" ] || continue
-        basename "$_fg_dir"
+    if [ -n "$_fg_name" ] && [ -d "$FG_SYSFS_ROOT/$_fg_name" ]; then
+        echo "$_fg_name"
         return 0
-    done
+    fi
     return 1
 }
 
@@ -230,6 +321,7 @@ fg_init_runtime_paths() {
     FG_INSTANCE=${FG_INSTANCE:-$(fg_instance_name 2>/dev/null)}
     [ -n "$FG_INSTANCE" ] || return 1
     FG_INSTANCE_DIR=$FG_SYSFS_ROOT/$FG_INSTANCE
+    [ -d "$FG_INSTANCE_DIR" ] || return 1
     FG_GC_FILE=$FG_INSTANCE_DIR/gc_urgent
     FG_FREE_FILE=$FG_INSTANCE_DIR/free_segments
     FG_DIRTY_FILE=$FG_INSTANCE_DIR/dirty_segments
